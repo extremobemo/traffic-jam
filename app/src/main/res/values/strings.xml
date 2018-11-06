@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Traffic_Jam</string>
+    <string name="title_activity_user_map">Nearby</string>
+</resources>
