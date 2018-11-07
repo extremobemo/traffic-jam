@@ -4,7 +4,6 @@ import android.content.IntentFilter;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.content.BroadcastReceiver;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -18,11 +17,14 @@ import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
@@ -32,7 +34,6 @@ import com.spotify.protocol.types.Track;
 
 public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback {
     public static String song;
-    public static BroadcastReceiver broadcastReceiver = new myBroadcastReceiver();
     public static MarkerOptions syd = new MarkerOptions().position(new LatLng(-34, 151)).title(song);
     public static GoogleMap mMap;
     private static final String REDIRECT_URI = "extremobemotrafficjam://callback";
@@ -46,14 +47,26 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        createNotificationChannel();
 
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    "Traffic Jam",
+                    "Example Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
     }
     @Override
     protected void onStart() {
+        startService(new Intent(this, jam_service.class));
         super.onStart();
-        IntentFilter intentFilter = new IntentFilter(myBroadcastReceiver.BroadcastTypes.METADATA_CHANGED);
-        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiver, intentFilter);
             ConnectionParams connectionParams =
                             new ConnectionParams.Builder("7cc32309fd9e44638285bfb50fdc5482")
                                     .setRedirectUri(REDIRECT_URI)
@@ -70,8 +83,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         System.out.println("MainActivity Connected! Yay!");
                         // Now you can start interacting with App Remote
                         connected();
-                        mMap.addMarker(syd);
-                        mSpotifyAppRemote.getPlayerApi().play("spotify:user:spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+                        //mMap.addMarker(syd);
+                        //mSpotifyAppRemote.getPlayerApi().play("spotify:user:spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
                     }
 
                     @Override
@@ -94,6 +107,17 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         super.onStop();
         // Aaand we will finish off here.
     }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        unregisterReceiver(jam_service.broadcastReceiver);
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        }
 
 
     /**

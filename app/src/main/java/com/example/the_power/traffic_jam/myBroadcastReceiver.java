@@ -3,10 +3,11 @@ package com.example.the_power.traffic_jam;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
+import java.sql.*;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import android.media.ToneGenerator;
+import android.media.AudioManager;
 public class myBroadcastReceiver extends BroadcastReceiver {
     static final class BroadcastTypes {
         public static final String SPOTIFY_PACKAGE = "com.spotify.music";
@@ -17,7 +18,9 @@ public class myBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-       UserMapActivity.mMap.clear();
+        ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+        toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP,150);
+        UserMapActivity.mMap.clear();
        UserMapActivity.mMap.addMarker(new MarkerOptions().position(new LatLng(-34, 151)).title(intent.getStringExtra("track")));
        System.out.print(intent.getStringExtra("album"));
         // This is sent with all broadcasts, regardless of type. The value is taken from
