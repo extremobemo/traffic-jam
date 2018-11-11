@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "877263553040",
+    "firebase_url": "https://traffic-jam-221621.firebaseio.com",
+    "project_id": "traffic-jam-221621",
+    "storage_bucket": "traffic-jam-221621.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877263553040:android:b8803dbf0ecc7843",
+        "android_client_info": {
+          "package_name": "com.example.the_power.traffic_jam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "877263553040-dp511en2sb292hciadpjhq78ibncifpj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.the_power.traffic_jam",
+            "certificate_hash": "eccacdc3e1fa30847fd4cdbd0c0822aa2fd0f7ef"
+          }
+        },
+        {
+          "client_id": "877263553040-7p65t2uu8ij8l2bp2e2ooa5cobg1udvj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbZ5qPAqWsiAJc55rEEIr_qeeJfctbqh0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "877263553040-7p65t2uu8ij8l2bp2e2ooa5cobg1udvj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

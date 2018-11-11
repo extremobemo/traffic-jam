@@ -1,5 +1,7 @@
 package com.example.the_power.traffic_jam;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -9,13 +11,17 @@ import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
-
 public class jam_service extends Service {
     public static BroadcastReceiver broadcastReceiver = new myBroadcastReceiver();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+    @Override
+    public void onCreate(){
+        super.onCreate();
+
     }
 
     @Override
