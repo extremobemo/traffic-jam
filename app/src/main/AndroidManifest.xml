@@ -51,7 +51,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".jam_service" />
+        <service android:name="jam_service" />
     </application>
 
 

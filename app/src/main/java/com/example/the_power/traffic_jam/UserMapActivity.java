@@ -3,6 +3,7 @@ package com.example.the_power.traffic_jam;
 import android.content.IntentFilter;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -54,6 +55,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     protected void onStart() {
         startService(new Intent(this, jam_service.class));
+        ContextCompat.startForegroundService(this, new Intent(this, jam_service.class));
+
         super.onStart();
             ConnectionParams connectionParams =
                             new ConnectionParams.Builder("7cc32309fd9e44638285bfb50fdc5482")
@@ -93,7 +96,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        unregisterReceiver(jam_service.broadcastReceiver);
+        //unregisterReceiver(jam_service.broadcastReceiver);
     }
 
     @Override
@@ -121,16 +124,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
-    class SpotifyListener extends TimerTask {
-
-        public void run(){
-            //mSpotifyAppRemote.getPlayerApi().play("spotify:user:spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
-            //System.out.println(executeCommand("curl -X GET \"https://api.spotify.com/v1/me/player/currently-playing\" -H \"Authorization: Bearer 7cc32309fd9e44638285bfb50fdc5482\""));
-
-        }
-    }
 
 }
-
 
 
