@@ -2,6 +2,7 @@ package com.example.the_power.traffic_jam;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.spotify.protocol.types.ImageUri;
 
 
 public class FirebaseConnect {
@@ -15,8 +16,11 @@ public class FirebaseConnect {
     }
     private static FirebaseDatabase database = FirebaseDatabase.getInstance();
     public static DatabaseReference myRef = database.getReference("songname");
-    public void writeNewUser(String userId, String name, String song_id) {
-        FirebaseConnect user = new FirebaseConnect(name, song_id);
-        myRef.child("extremobemo").child("songname").setValue(song_id);
+    public void writeNewUser(String userID, String song_id, ImageUri image, String uri) {
+        //FirebaseConnect user = new FirebaseConnect(name, song_id);
+        myRef.child(userID).child("track").child("songname").setValue(song_id);
+        myRef.child(userID).child("track").child("imageuri").setValue(image);
+        myRef.child(userID).child("track").child("trackuri").setValue(uri);
+
     }
 }

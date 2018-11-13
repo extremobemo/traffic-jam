@@ -96,7 +96,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     @Override
                                     public void onEvent(final PlayerState playerState) {
                                         mMap.clear();
-                                        c.writeNewUser(playerState.track.name,"extremobemo", playerState.track.name);
+                                        c.writeNewUser("extremobemo", playerState.track.name, playerState.track.imageUri,
+                                                playerState.track.uri);
                                         ImageUri currentImg = playerState.track.imageUri;
                                         mSpotifyAppRemote.getImagesApi().getImage(currentImg)
                                                 .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
