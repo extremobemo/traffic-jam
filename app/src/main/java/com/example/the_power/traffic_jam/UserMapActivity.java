@@ -1,6 +1,9 @@
 package com.example.the_power.traffic_jam;
 
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -9,15 +12,19 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory.*;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
+import android.graphics.Bitmap;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -25,16 +32,23 @@ import android.os.Build;
 
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
+import com.spotify.android.appremote.api.PlayerApi;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 
 import android.content.Context;
 import android.content.Intent;
 
+import com.spotify.protocol.client.CallResult;
+import com.spotify.protocol.client.ErrorCallback;
+import com.spotify.protocol.client.Result;
 import com.spotify.protocol.client.Subscription;
+import com.spotify.protocol.types.Image;
+import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
 public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback {
+    public static Bitmap cover;
     public static String song;
     public static MarkerOptions syd = new MarkerOptions().position(new LatLng(-34, 151)).title(song);
     public static GoogleMap mMap;
@@ -71,6 +85,40 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     @Override
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
+                        PlayerApi playerApi  = mSpotifyAppRemote.getPlayerApi();
+                        playerApi.getPlayerState()
+                                .setResultCallback(new CallResult.ResultCallback<PlayerState>() {
+                                    @Override
+                                    public void onResult(PlayerState playerState) {
+                                        ImageUri currentImg = playerState.track.imageUri;
+                                        mSpotifyAppRemote.getImagesApi().getImage(currentImg)
+                                                .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
+                                                    @Override
+                                                    public void onResult(Bitmap bitmap) {
+                                                       cover = bitmap;
+                                                        BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
+                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
+                                                                .title("Current Location")
+                                                                .snippet("Thinking of finding some thing...")
+                                                                .icon(d);
+                                                        mMap.addMarker(markerOptions);
+                                                    }
+                                                })
+                                                .setErrorCallback(new ErrorCallback() {
+                                                    @Override
+                                                    public void onError(Throwable throwable) {
+                                                        System.out.print("BEN");
+                                                    }
+                                                });
+
+                                    }
+                                })
+                                .setErrorCallback(new ErrorCallback() {
+                                    @Override
+                                    public void onError(Throwable throwable) {
+                                        System.out.print("BEN");
+                                    }
+                                });
                         System.out.println("MainActivity Connected! Yay!");
                         // Now you can start interacting with App Remote
                         //mMap.addMarker(syd);
