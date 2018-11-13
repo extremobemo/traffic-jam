@@ -1,56 +1,30 @@
 package com.example.the_power.traffic_jam;
-
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory.*;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import android.graphics.Bitmap;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.os.Build;
-
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.PlayerApi;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
-
-import android.content.Context;
-import android.content.Intent;
-
 import com.spotify.protocol.client.CallResult;
 import com.spotify.protocol.client.ErrorCallback;
-import com.spotify.protocol.client.Result;
 import com.spotify.protocol.client.Subscription;
-import com.spotify.protocol.types.Image;
 import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
-import com.spotify.protocol.types.Track;
+
 
 public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback {
     public static Bitmap cover;
+    public FirebaseConnect c;
     public static String song;
-    public static MarkerOptions syd = new MarkerOptions().position(new LatLng(-34, 151)).title(song);
     public static GoogleMap mMap;
     private static final String REDIRECT_URI = "extremobemotrafficjam://callback";
     private SpotifyAppRemote mSpotifyAppRemote;
@@ -62,14 +36,12 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        //createNotificationChannel();
 
     }
 
     @Override
     protected void onStart() {
-        startService(new Intent(this, jam_service.class));
-        ContextCompat.startForegroundService(this, new Intent(this, jam_service.class));
+        c = new FirebaseConnect();
 
         super.onStart();
             ConnectionParams connectionParams =
@@ -85,11 +57,11 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     @Override
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
-                        PlayerApi playerApi  = mSpotifyAppRemote.getPlayerApi();
+                        final PlayerApi playerApi  = mSpotifyAppRemote.getPlayerApi();
                         playerApi.getPlayerState()
                                 .setResultCallback(new CallResult.ResultCallback<PlayerState>() {
                                     @Override
-                                    public void onResult(PlayerState playerState) {
+                                    public void onResult(final PlayerState playerState) {
                                         ImageUri currentImg = playerState.track.imageUri;
                                         mSpotifyAppRemote.getImagesApi().getImage(currentImg)
                                                 .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
@@ -98,8 +70,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                        cover = bitmap;
                                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
                                                         MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
-                                                                .title("Current Location")
-                                                                .snippet("Thinking of finding some thing...")
+                                                                .title(playerState.track.name)
+                                                                .snippet(playerState.track.artist.name)
                                                                 .icon(d);
                                                         mMap.addMarker(markerOptions);
                                                     }
@@ -119,15 +91,48 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         System.out.print("BEN");
                                     }
                                 });
+                        playerApi.subscribeToPlayerState()
+                                .setEventCallback(new Subscription.EventCallback<PlayerState>() {
+                                    @Override
+                                    public void onEvent(final PlayerState playerState) {
+                                        mMap.clear();
+                                        c.writeNewUser(playerState.track.name,"extremobemo", playerState.track.name);
+                                        ImageUri currentImg = playerState.track.imageUri;
+                                        mSpotifyAppRemote.getImagesApi().getImage(currentImg)
+                                                .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
+                                                    @Override
+                                                    public void onResult(Bitmap bitmap) {
+                                                        cover = bitmap;
+                                                        BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
+                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
+                                                                .title(playerState.track.name)
+                                                                .snippet(playerState.track.artist.name)
+                                                                .icon(d);
+                                                        mMap.addMarker(markerOptions);
+                                                    }
+                                                })
+                                                .setErrorCallback(new ErrorCallback() {
+                                                    @Override
+                                                    public void onError(Throwable throwable) {
+                                                        System.out.println(throwable.toString());
+
+                                                    }
+                                                });
+                                    }
+                                })
+                                .setErrorCallback(new ErrorCallback() {
+                                    @Override
+                                    public void onError(Throwable throwable) {
+                                        // =( =( =(
+                                    }
+                                });
                         System.out.println("MainActivity Connected! Yay!");
                         // Now you can start interacting with App Remote
-                        //mMap.addMarker(syd);
-                        //mSpotifyAppRemote.getPlayerApi().play("spotify:user:spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
                     }
 
                     @Override
                     public void onFailure(Throwable throwable) {
-                        System.out.println("FSDFHSDFJSLDFJSDLKFJLSDKFJSLDKFJL" + throwable);
+                        System.out.println("Something went wrong trying to connect to Spotify! " + throwable);
 
                         // Something went wrong when attempting to connect! Handle errors here
                     }
@@ -165,12 +170,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(40, -151);
-        Marker marker = mMap.addMarker(new MarkerOptions().position(sydney).title("DUFHSDUFHDSUF"));
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(40, -151)));
     }
 
 }

@@ -25,18 +25,6 @@
              sign the APK for publishing.
              You can define the keys for the debug and release targets in src/debug/ and src/release/. 
         -->
-        <receiver
-            android:name="myBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true">
-
-            <intent-filter>
-                <action android:name="com.spotify.music.playbackstatechanged"/>
-                <action android:name="com.spotify.music.metadatachanged"/>
-                <action android:name="com.spotify.music.queuechanged"/>
-            </intent-filter>
-
-        </receiver>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
