@@ -9,6 +9,7 @@ import android.graphics.drawable.Icon;
 import android.provider.CalendarContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -58,7 +59,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
     @Override
     protected void onStart() {
-        dialog = new Dialog(UserMapActivity.this);
+        dialog = new Dialog(UserMapActivity.this, R.style.DialogSlideAnim);
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
         TextView song = (TextView) findViewById(R.id.song_name);
 
         c = new FirebaseConnect();
@@ -90,7 +92,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                        cover = bitmap;
                                                        Drawable j = new BitmapDrawable(getResources(), bitmap);
                                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
-                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
+                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-96))
                                                                 .title(playerState.track.name)
                                                                 .snippet(playerState.track.artist.name);
                                                         mMap.addMarker(markerOptions);
@@ -133,7 +135,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                                         ImageView i = dialog.findViewById(R.id.CoverArt);
                                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
-                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
+                                                        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-96))
                                                                 .title(playerState.track.name)
                                                                 .snippet(playerState.track.artist.name);
                                                         mMap.addMarker(markerOptions);
@@ -205,7 +207,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(40, -151)));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(50, -120)));
     }
 
     @Override
