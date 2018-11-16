@@ -1,7 +1,19 @@
 package com.example.the_power.traffic_jam;
+import android.app.Dialog;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
+import android.provider.CalendarContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -9,6 +21,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
@@ -21,13 +34,17 @@ import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 
 
-public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback {
+
+public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     public static Bitmap cover;
     public FirebaseConnect c;
     public static String song;
     public static GoogleMap mMap;
     private static final String REDIRECT_URI = "extremobemotrafficjam://callback";
     private SpotifyAppRemote mSpotifyAppRemote;
+    public Dialog dialog;
+    public RelativeLayout popupbg;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +58,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
     @Override
     protected void onStart() {
+        dialog = new Dialog(UserMapActivity.this);
+        TextView song = (TextView) findViewById(R.id.song_name);
+
         c = new FirebaseConnect();
 
         super.onStart();
@@ -68,12 +88,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                     @Override
                                                     public void onResult(Bitmap bitmap) {
                                                        cover = bitmap;
+                                                       Drawable j = new BitmapDrawable(getResources(), bitmap);
                                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
                                                         MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
                                                                 .title(playerState.track.name)
-                                                                .snippet(playerState.track.artist.name)
-                                                                .icon(d);
+                                                                .snippet(playerState.track.artist.name);
                                                         mMap.addMarker(markerOptions);
+                                                        dialog.setContentView(R.layout.user_popup);
+                                                        ImageView i = dialog.findViewById(R.id.CoverArt);
+                                                        cover = Bitmap.createScaledBitmap(bitmap,  300 ,300, true);
+                                                        i.setImageDrawable(j);
+
+
                                                     }
                                                 })
                                                 .setErrorCallback(new ErrorCallback() {
@@ -104,19 +130,26 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                     @Override
                                                     public void onResult(Bitmap bitmap) {
                                                         cover = bitmap;
+                                                        Drawable j = new BitmapDrawable(getResources(), bitmap);
+                                                        ImageView i = dialog.findViewById(R.id.CoverArt);
                                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
                                                         MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(40,-151))
                                                                 .title(playerState.track.name)
-                                                                .snippet(playerState.track.artist.name)
-                                                                .icon(d);
+                                                                .snippet(playerState.track.artist.name);
                                                         mMap.addMarker(markerOptions);
+                                                        i.setImageDrawable(j);
+                                                        dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
+                                                        //popupbg.setBackgroundColor(Color.parseColor("#"+Integer.toString(getDominantColor(bitmap))));
+                                                        //ColorDrawable background_color = new ColorDrawable(color);
+                                                        //ImageView back = dialog.findViewById(R.id.background);
+                                                       // System.out.println(color);
+
                                                     }
                                                 })
                                                 .setErrorCallback(new ErrorCallback() {
                                                     @Override
                                                     public void onError(Throwable throwable) {
                                                         System.out.println(throwable.toString());
-
                                                     }
                                                 });
                                     }
@@ -171,7 +204,21 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(40, -151)));
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker m) {
+        dialog.show();
+        return true;
+    }
+
+    public static int getDominantColor(Bitmap bitmap) {
+        Bitmap newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
+        final int color = newBitmap.getPixel(0, 0);
+        newBitmap.recycle();
+        return color;
     }
 
 }
