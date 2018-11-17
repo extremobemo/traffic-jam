@@ -84,7 +84,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     Number lon = (Number) child.child("location").child("lon").getValue();
                     double latf = lat.floatValue();
                     double lonf = lon.floatValue();
-                    mMap.addMarker(new MarkerOptions().position(new LatLng(latf, lonf)));
+                    mMap.addMarker(new MarkerOptions().position(new LatLng(latf, lonf)).title(child.getKey()));
+                    System.out.println(child.getKey());
                     //TODO ALWAYS RETURNING 0 :/
                 }
             }
@@ -100,6 +101,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     protected void onStart() {
         dialog = new Dialog(UserMapActivity.this, R.style.DialogSlideAnim);
         dialog.getWindow().setGravity(Gravity.CENTER);
+
         TextView song = (TextView) findViewById(R.id.song_name);
 
         c = new FirebaseConnect(user,"0");
@@ -173,7 +175,46 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     }
 
     @Override
-    public boolean onMarkerClick(Marker m) {
+    public boolean onMarkerClick(final Marker m) {
+            final FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference ref = database.getReference("songname");
+            ref.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for(DataSnapshot child : dataSnapshot.getChildren() ){
+                        if(child.getKey().equals(m.getTitle())){
+                            ImageUri currentImg = new ImageUri((String) child.child("track").child("imageuri").child("raw").getValue());
+                            mSpotifyAppRemote.getImagesApi().getImage(currentImg)
+                                    .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
+                                        @Override
+                                        public void onResult(Bitmap bitmap) {
+                                            c.writeLocation(latitude,longitude);
+                                            cover = bitmap;
+                                            Drawable j = new BitmapDrawable(getResources(), bitmap);
+                                            dialog.setContentView(R.layout.user_popup);
+                                            ImageView i = dialog.findViewById(R.id.CoverArt);
+                                            cover = Bitmap.createScaledBitmap(bitmap,  300 ,300, true);
+                                            i.setImageDrawable(j);
+
+
+                                        }
+                                    })
+                                    .setErrorCallback(new ErrorCallback() {
+                                        @Override
+                                        public void onError(Throwable throwable) {
+                                            System.out.print("BEN");
+                                        }
+                                    });
+                        }
+                    }
+
+
+                }@Override
+                public void onCancelled(DatabaseError databaseError) {
+                    System.out.println("The read failed: " + databaseError.getCode());
+
+        }
+            });
         dialog.show();
         return true;
     }
@@ -210,6 +251,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             Double lat = (Double) location.getLatitude();
             Double lon = (Double) location.getLongitude();
             LatLng result = new LatLng(lat,lon);
+            lm.removeUpdates(this);
             return result;
         }
         catch(SecurityException e) {
@@ -308,7 +350,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         ImageView i = dialog.findViewById(R.id.CoverArt);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
-                                        i.setImageDrawable(j);
+                                        //i.setImageDrawable(j);
                                         dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
                                         TextView song_n = (TextView) dialog.findViewById(R.id.song_name);
                                         TextView song_a = (TextView) dialog.findViewById(R.id.artist);

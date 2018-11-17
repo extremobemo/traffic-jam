@@ -25,6 +25,7 @@ public class FirebaseConnect {
         myRef.child(userID).child("track").child("songname").setValue(song_id);
         myRef.child(userID).child("track").child("imageuri").setValue(image);
         myRef.child(userID).child("track").child("trackuri").setValue(uri);
+        myRef.child(userID).child("track").child("username").setValue(username);
     }
 
     public void writeLocation(Double lat, Double lon){
