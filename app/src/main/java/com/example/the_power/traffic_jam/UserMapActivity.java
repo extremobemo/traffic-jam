@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -64,7 +65,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public MarkerOptions markerOptions;
     public Marker myMark;
     public PlayerApi playerApi;
-    public final String user = "extremobemo";
+    public final String user = "BigErdog";
+    public boolean dialog_open = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,8 +80,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                mMap.clear();
                 for(DataSnapshot child : dataSnapshot.getChildren() ){
-                    System.out.println(child.child("location").child("lat").getValue());
+                    //System.out.println(child.child("location").child("lat").getValue());
                     Number lat = (Number) child.child("location").child("lat").getValue(); // Long or Double
                     Number lon = (Number) child.child("location").child("lon").getValue();
                     double latf = lat.floatValue();
@@ -124,8 +127,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         mSpotifyAppRemote = spotifyAppRemote;
                         playerApi  = mSpotifyAppRemote.getPlayerApi();
                         hostStation();
-                        LatLng location = getLocation();
-                        c.writeLocation(location.latitude, location.longitude);
+                        //LatLng location = getLocation();
+                        //c.writeLocation(location.latitude, location.longitude);
                         //TODO GET LAT/LON HERE AND PUSH TO FIREBASE
                         // Now you can start interacting with App Remote
                     }
@@ -155,7 +158,11 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     protected void onPause(){
         super.onPause();
+        if(dialog_open == true){
+            dialog.dismiss();
+            dialog_open = false;
         }
+    }
 
 
     /**
@@ -176,6 +183,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
     @Override
     public boolean onMarkerClick(final Marker m) {
+        if(dialog_open == false){
             final FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference ref = database.getReference("songname");
             ref.addValueEventListener(new ValueEventListener() {
@@ -188,14 +196,24 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
                                         @Override
                                         public void onResult(Bitmap bitmap) {
-                                            c.writeLocation(latitude,longitude);
+                                            //c.writeLocation(latitude,longitude);
                                             cover = bitmap;
                                             Drawable j = new BitmapDrawable(getResources(), bitmap);
                                             dialog.setContentView(R.layout.user_popup);
                                             ImageView i = dialog.findViewById(R.id.CoverArt);
                                             cover = Bitmap.createScaledBitmap(bitmap,  300 ,300, true);
                                             i.setImageDrawable(j);
-
+                                            dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
+                                            Button cancel = (Button) dialog.findViewById(R.id.cancel);
+                                            cancel.setOnClickListener(new View.OnClickListener()
+                                            {
+                                                @Override
+                                                public void onClick(View v)
+                                                {
+                                                    dialog.dismiss();
+                                                    dialog_open = false;
+                                                }
+                                            });
 
                                         }
                                     })
@@ -208,16 +226,19 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         }
                     }
 
-
-                }@Override
+                }
+                @Override
                 public void onCancelled(DatabaseError databaseError) {
                     System.out.println("The read failed: " + databaseError.getCode());
+                }
+            });
+            dialog_open = true;
+            dialog.show();
 
         }
-            });
-        dialog.show();
         return true;
     }
+
 
     public static int getDominantColor(Bitmap bitmap) {
         Bitmap newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
@@ -265,9 +286,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         if(myMark != null){
 
         }
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
-        c.writeLocation(location.getLatitude(), location.getLongitude());
+        //latitude = location.getLatitude();
+        //longitude = location.getLongitude();
+        //c.writeLocation(location.getLatitude(), location.getLongitude());
         latitude = location.getLatitude();
         longitude = location.getLongitude();
         markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude()));
@@ -305,7 +326,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     public void onResult(Bitmap bitmap) {
                                         c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
                                                 playerState.track.uri);
-                                        c.writeLocation(latitude,longitude);
+                                        //c.writeLocation(latitude,longitude);
                                         cover = bitmap;
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
