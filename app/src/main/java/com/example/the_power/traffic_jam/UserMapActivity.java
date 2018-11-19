@@ -1,4 +1,5 @@
 package com.example.the_power.traffic_jam;
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -50,7 +51,7 @@ import com.spotify.protocol.types.PlayerState;
 
 
 
-public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener {
+public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
     public static Bitmap cover;
     public FirebaseConnect c;
     public static String song;
@@ -59,14 +60,15 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     private SpotifyAppRemote mSpotifyAppRemote;
     public Dialog dialog;
     public RelativeLayout popupbg;
-    public double latitude;
-    public double longitude;
+    public double latitude = 0.0;
+    public double longitude = 0.0;
     public LocationManager lm;
     public MarkerOptions markerOptions;
     public Marker myMark;
     public PlayerApi playerApi;
-    public final String user = "BigErdog";
+    public final String user = "extremobemo";
     public boolean dialog_open = false;
+    public String prospect;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +90,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     double latf = lat.floatValue();
                     double lonf = lon.floatValue();
                     mMap.addMarker(new MarkerOptions().position(new LatLng(latf, lonf)).title(child.getKey()));
-                    System.out.println(child.getKey());
+
                     //TODO ALWAYS RETURNING 0 :/
                 }
             }
@@ -97,7 +99,39 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 System.out.println("The read failed: " + databaseError.getCode());
             }
         });
+        // Acquire a reference to the system Location Manager
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                if(latitude == 0.0 && longitude == 0.0){
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                    c.writeLocation(latitude, longitude);
+                }
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            public void onProviderEnabled(String provider) {}
+
+            public void onProviderDisabled(String provider) {}
+        };
+
+        // Register the listener with the Location Manager to receive location updates
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED) {
+            // Permission already Granted
+            //Do your work here
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+            //Perform operations here only which requires permission
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
     }
 
     @Override
@@ -162,6 +196,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             dialog.dismiss();
             dialog_open = false;
         }
+        latitude = 0.0;
+        longitude = 0.0;
     }
 
 
@@ -183,6 +219,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
     @Override
     public boolean onMarkerClick(final Marker m) {
+        prospect = m.getTitle();
         if(dialog_open == false){
             final FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference ref = database.getReference("songname");
@@ -210,6 +247,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                 @Override
                                                 public void onClick(View v)
                                                 {
+                                                    dialog.dismiss();
+                                                    dialog_open = false;
+                                                }
+                                            });
+
+                                            Button sub = (Button) dialog.findViewById(R.id.sub);
+                                            sub.setOnClickListener(new View.OnClickListener()
+                                            {
+                                                @Override
+                                                public void onClick(View v)
+                                                {
+                                                    //subscribe(prospect);
                                                     dialog.dismiss();
                                                     dialog_open = false;
                                                 }
@@ -250,10 +299,11 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public void subscribe(String user){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("songname");
-        ref.child(user).child("track").child("songname").addValueEventListener(new ValueEventListener() {
+        ref.child(user).child("track").child("trackuri").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                System.out.println(dataSnapshot.toString());
+               mSpotifyAppRemote.getPlayerApi().play(dataSnapshot.getValue().toString());
+                System.out.println(dataSnapshot.getValue());
             }
 
             @Override
@@ -263,56 +313,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         });
 
     }
-
-    LatLng getLocation() {
-        try {
-            lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, this);
-            Location location = lm.getLastKnownLocation(LOCATION_SERVICE);
-            Double lat = (Double) location.getLatitude();
-            Double lon = (Double) location.getLongitude();
-            LatLng result = new LatLng(lat,lon);
-            lm.removeUpdates(this);
-            return result;
-        }
-        catch(SecurityException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if(myMark != null){
-
-        }
-        //latitude = location.getLatitude();
-        //longitude = location.getLongitude();
-        //c.writeLocation(location.getLatitude(), location.getLongitude());
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
-        markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude()));
-        myMark = mMap.addMarker(markerOptions);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude())));
-        System.out.println("Current Location: " + location.getLatitude() + ", " + location.getLongitude());
-        lm = null;
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-        System.out.println("Please Enable GPS and Internet");
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
     public void hostStation(){
         playerApi  = mSpotifyAppRemote.getPlayerApi();
         playerApi.getPlayerState()
@@ -331,7 +331,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
                                         markerOptions = new MarkerOptions().position(new LatLng(40,-96))
-                                                .title(playerState.track.name)
+                                                .title(user)
                                                 .snippet(playerState.track.artist.name);
                                         dialog.setContentView(R.layout.user_popup);
                                         ImageView i = dialog.findViewById(R.id.CoverArt);
@@ -353,7 +353,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 .setErrorCallback(new ErrorCallback() {
                     @Override
                     public void onError(Throwable throwable) {
-                        System.out.print("BEN");
+                        System.out.print(throwable.toString());
                     }
                 });
         playerApi.subscribeToPlayerState()

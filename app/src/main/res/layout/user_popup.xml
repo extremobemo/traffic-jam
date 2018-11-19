@@ -17,7 +17,7 @@
         android:layout_marginTop="21dp" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/sub"
         style="@android:style/Widget.Material.Light.Button"
         android:layout_width="202dp"
         android:layout_height="37dp"
