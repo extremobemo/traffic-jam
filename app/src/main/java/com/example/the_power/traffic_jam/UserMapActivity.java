@@ -59,7 +59,7 @@ import com.spotify.protocol.types.PlayerState;
 import java.io.IOException;
 
 
-public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener{
+public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     public static Bitmap cover;
     public FirebaseConnect c;
     public static String song;
@@ -234,10 +234,10 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         public void onSuccess(Location location) {
                             // Got last known location. In some rare situations this can be null.
                             if (location != null) {
-                                c.writeLocation(location.getLatitude(), location.getLongitude());
+                                c.writeLocation(user, location.getLatitude(), location.getLongitude());
                             }
                             else{
-                                c.writeLocation(5.0,5.0);
+                                c.writeLocation(user,5.0,5.0);
                             }
                         }
                     });
@@ -327,27 +327,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         newBitmap.recycle();
         return color;
     }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        c.writeLocation(location.getLatitude(), location.getLongitude());
-        markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude()));
-        myMark = mMap.addMarker(markerOptions);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude())));
-        System.out.println("Current Location: " + location.getLatitude() + ", " + location.getLongitude());
-        lm = null;
-    }
-    @Override
-    public void onProviderDisabled(String provider) {
-        System.out.println("Please Enable GPS and Internet");
-    }
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-    }
-    @Override
-    public void onProviderEnabled(String provider) {
-    }
-
     public void subscribe(String user){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("songname");

@@ -28,9 +28,9 @@ public class FirebaseConnect {
         myRef.child(userID).child("track").child("username").setValue(username);
     }
 
-    public void writeLocation(Double lat, Double lon){
-        myRef.child(username).child("location").child("lat").setValue(lat);
-        myRef.child(username).child("location").child("lon").setValue(lon);
+    public void writeLocation(String userID ,Double lat, Double lon){
+        myRef.child(userID).child("location").child("lat").setValue(lat);
+        myRef.child(userID).child("location").child("lon").setValue(lon);
     }
 
 }
