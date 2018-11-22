@@ -9,6 +9,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
+import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -24,15 +26,20 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseError;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -49,9 +56,10 @@ import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 
+import java.io.IOException;
 
 
-public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
+public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener{
     public static Bitmap cover;
     public FirebaseConnect c;
     public static String song;
@@ -60,8 +68,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     private SpotifyAppRemote mSpotifyAppRemote;
     public Dialog dialog;
     public RelativeLayout popupbg;
-    public double latitude = 0.0;
-    public double longitude = 0.0;
     public LocationManager lm;
     public MarkerOptions markerOptions;
     public Marker myMark;
@@ -69,8 +75,15 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public final String user = "extremobemo";
     public boolean dialog_open = false;
     public String prospect;
+    LocationManager locationManager;
+    LocationListener locationListener;
+    FusedLocationProviderClient mFusedLocationClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -79,11 +92,28 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         mapFragment.getMapAsync(this);
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("songname");
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (location != null) {
+                        CameraPosition.Builder builder = new CameraPosition.Builder();
+                        builder.tilt(30);
+                        builder.zoom(18f);
+                        builder.target(new LatLng(location.getLatitude(), location.getLongitude()));
+                        CameraPosition cameraPosition = builder.build();
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                    }
+                }
+            });
+        }
+
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mMap.clear();
-                for(DataSnapshot child : dataSnapshot.getChildren() ){
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
                     //System.out.println(child.child("location").child("lat").getValue());
                     Number lat = (Number) child.child("location").child("lat").getValue(); // Long or Double
                     Number lon = (Number) child.child("location").child("lon").getValue();
@@ -94,6 +124,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     //TODO ALWAYS RETURNING 0 :/
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 System.out.println("The read failed: " + databaseError.getCode());
@@ -103,35 +134,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
         // Define a listener that responds to location updates
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                if(latitude == 0.0 && longitude == 0.0){
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                    c.writeLocation(latitude, longitude);
-                }
-            }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-            public void onProviderEnabled(String provider) {}
-
-            public void onProviderDisabled(String provider) {}
-        };
 
         // Register the listener with the Location Manager to receive location updates
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                        PackageManager.PERMISSION_GRANTED) {
-            // Permission already Granted
-            //Do your work here
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-
-            //Perform operations here only which requires permission
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-        }
     }
 
     @Override
@@ -196,9 +200,12 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             dialog.dismiss();
             dialog_open = false;
         }
-        latitude = 0.0;
-        longitude = 0.0;
     }
+    @Override
+    protected void onResume(){
+        super.onResume();
+    }
+
 
 
     /**
@@ -215,6 +222,30 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         mMap = googleMap;
         mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(50, -120)));
+        LocationManager service = (LocationManager)
+                getSystemService(LOCATION_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            return;
+        }else{
+            mFusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                c.writeLocation(location.getLatitude(), location.getLongitude());
+                            }
+                            else{
+                                c.writeLocation(5.0,5.0);
+                            }
+                        }
+                    });
+        }
+
+
+
+
     }
 
     @Override
@@ -249,6 +280,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                 {
                                                     dialog.dismiss();
                                                     dialog_open = false;
+
                                                 }
                                             });
 
@@ -258,7 +290,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                 @Override
                                                 public void onClick(View v)
                                                 {
-                                                    //subscribe(prospect);
+                                                    subscribe(prospect);
                                                     dialog.dismiss();
                                                     dialog_open = false;
                                                 }
@@ -296,6 +328,26 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         return color;
     }
 
+    @Override
+    public void onLocationChanged(Location location) {
+        c.writeLocation(location.getLatitude(), location.getLongitude());
+        markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(),location.getLongitude()));
+        myMark = mMap.addMarker(markerOptions);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(),location.getLongitude())));
+        System.out.println("Current Location: " + location.getLatitude() + ", " + location.getLongitude());
+        lm = null;
+    }
+    @Override
+    public void onProviderDisabled(String provider) {
+        System.out.println("Please Enable GPS and Internet");
+    }
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+    @Override
+    public void onProviderEnabled(String provider) {
+    }
+
     public void subscribe(String user){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("songname");
@@ -326,7 +378,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     public void onResult(Bitmap bitmap) {
                                         c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
                                                 playerState.track.uri);
-                                        //c.writeLocation(latitude,longitude);
                                         cover = bitmap;
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
@@ -397,7 +448,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         // =( =( =(
                     }
                 });
-
     }
 }
 

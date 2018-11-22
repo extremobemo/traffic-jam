@@ -40,6 +40,7 @@ dependencies {
     compile project(':jam-remote')
     compile "com.google.code.gson:gson:2.6.1"
     compile 'se.michaelthelin.spotify:spotify-web-api-java:2.1.1'
+    compile 'com.google.android.gms:play-services-location:16.0.0'
     implementation 'com.google.firebase:firebase-database:16.0.4'
     implementation 'com.google.firebase:firebase-core:16.0.5'
     implementation 'com.google.android.gms:play-services-auth:16.+'
