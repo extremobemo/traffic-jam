@@ -16,6 +16,8 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.CalendarContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -26,6 +28,8 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewAnimationUtils;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -82,6 +86,10 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public String prospect;
     private RelativeLayout layoutButtons;
     private RelativeLayout layoutMain;
+    private boolean hostviewOpen = false;
+    public double myLat;
+    public double myLong;
+    public boolean amHosting = false;
     FloatingActionButton fab;
     LocationManager locationManager;
     LocationListener locationListener;
@@ -101,7 +109,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                viewMenu();
+                Button host = (Button) findViewById(R.id.host);
+                host.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        hostStation();
+                        viewHostMenu();
+
+                    }
+                });
+                viewHostMenu();
             }
         });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -131,15 +150,22 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mMap.clear();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    //System.out.println(child.child("location").child("lat").getValue());
-                    Number lat = (Number) child.child("location").child("lat").getValue(); // Long or Double
-                    Number lon = (Number) child.child("location").child("lon").getValue();
-                    double latf = lat.floatValue();
-                    double lonf = lon.floatValue();
-                    mMap.addMarker(new MarkerOptions().position(new LatLng(latf, lonf)).title(child.getKey()));
+                    for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        if(child.getKey() == user){
+                            try{
+                                double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
+                                double lon = (double) child.child("location").child("lon").getValue();
+                                dropPinEffect(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey())));
+                            }catch(Exception e){
+                                continue;
+                            }
 
-                    //TODO ALWAYS RETURNING 0 :/
+                        }
+                        else{
+                            double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
+                            double lon = (double) child.child("location").child("lon").getValue();
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
+                        }
                 }
             }
 
@@ -182,7 +208,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
                         playerApi  = mSpotifyAppRemote.getPlayerApi();
-                        hostStation();
+                        //hostStation();
                         //LatLng location = getLocation();
                         //c.writeLocation(location.latitude, location.longitude);
                         //TODO GET LAT/LON HERE AND PUSH TO FIREBASE
@@ -198,8 +224,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 });
 
     }
-    private void viewMenu() {
-
+    private void viewHostMenu() {
+        if(hostviewOpen == false){
+            hostviewOpen = true;
             int x = layoutMain.getRight();
             int y = layoutMain.getBottom();
 
@@ -235,6 +262,44 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             });
 
         }
+           else{
+            hostviewOpen = false;
+            int x = layoutMain.getRight();
+            int y = layoutMain.getBottom();
+
+            int startRadius = (int) Math.hypot(layoutMain.getWidth(), layoutMain.getHeight());
+            int endRadius = 0;
+
+
+            Animator anim = ViewAnimationUtils.createCircularReveal(layoutButtons, x, y, startRadius, endRadius);
+
+            layoutButtons.setVisibility(View.VISIBLE);
+            anim.start();
+
+            anim.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animator) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animator) {
+                    layoutButtons.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animator) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animator) {
+
+                }
+            });
+
+        }
+    }
 
     @Override
     protected void onStop() {
@@ -272,6 +337,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -289,7 +355,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         public void onSuccess(Location location) {
                             // Got last known location. In some rare situations this can be null.
                             if (location != null) {
-                                c.writeLocation(user, location.getLatitude(), location.getLongitude());
+                                myLat = location.getLatitude();
+                                myLong = location.getLongitude();
+                               // c.writeLocation(user, location.getLatitude(), location.getLongitude());
                             }
                             else{
                                 c.writeLocation(user,5.0,5.0);
@@ -297,10 +365,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         }
                     });
         }
-
-
-
-
     }
 
     @Override
@@ -399,7 +463,35 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         });
 
     }
+    private void dropPinEffect(final Marker marker) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        final long duration = 1500;
+
+        final Interpolator interpolator = new BounceInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = Math.max(
+                        1 - interpolator.getInterpolation((float) elapsed
+                                / duration), 0);
+                marker.setAnchor(0.5f, 1.0f + 14 * t);
+
+                if (t > 0.0) {
+                    // Post again 15ms later.
+                    handler.postDelayed(this, 15);
+                } else {
+                    marker.showInfoWindow();
+
+                }
+            }
+        });
+    }
     public void hostStation(){
+        c.writeLocation(user, myLat, myLong);
+        amHosting = true;
         playerApi  = mSpotifyAppRemote.getPlayerApi();
         playerApi.getPlayerState()
                 .setResultCallback(new CallResult.ResultCallback<PlayerState>() {
@@ -415,7 +507,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         cover = bitmap;
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
-                                        markerOptions = new MarkerOptions().position(new LatLng(40,-96))
+                                        markerOptions = new MarkerOptions()
                                                 .title(user)
                                                 .snippet(playerState.track.artist.name);
                                         dialog.setContentView(R.layout.user_popup);
@@ -462,10 +554,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         TextView song_a = (TextView) dialog.findViewById(R.id.artist);
                                         song_n.setText(playerState.track.name);
                                         song_a.setText(playerState.track.artist.name);
-                                        //popupbg.setBackgroundColor(Color.parseColor("#"+Integer.toString(getDominantColor(bitmap))));
-                                        //ColorDrawable background_color = new ColorDrawable(color);
-                                        //ImageView back = dialog.findViewById(R.id.background);
-                                        // System.out.println(color);
                                     }
                                 })
                                 .setErrorCallback(new ErrorCallback() {
