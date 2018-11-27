@@ -310,6 +310,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        c.deleteInstance(user);
         //unregisterReceiver(jam_service.broadcastReceiver);
     }
 
