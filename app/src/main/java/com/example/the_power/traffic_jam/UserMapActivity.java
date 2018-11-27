@@ -1,8 +1,10 @@
 package com.example.the_power.traffic_jam;
 import android.Manifest;
+import android.animation.Animator;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -15,12 +17,15 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.provider.CalendarContract;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -75,9 +80,13 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public final String user = "extremobemo";
     public boolean dialog_open = false;
     public String prospect;
+    private RelativeLayout layoutButtons;
+    private RelativeLayout layoutMain;
+    FloatingActionButton fab;
     LocationManager locationManager;
     LocationListener locationListener;
     FusedLocationProviderClient mFusedLocationClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +95,15 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_map);
+        layoutButtons = (RelativeLayout) findViewById(R.id.layoutButtons);
+        layoutMain = (RelativeLayout) findViewById(R.id.main);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                viewMenu();
+            }
+        });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -180,6 +198,43 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 });
 
     }
+    private void viewMenu() {
+
+            int x = layoutMain.getRight();
+            int y = layoutMain.getBottom();
+
+            int startRadius = 0;
+            int endRadius = (int) Math.hypot(layoutMain.getWidth(), layoutMain.getHeight());
+
+
+            Animator anim = ViewAnimationUtils.createCircularReveal(layoutButtons, x, y, startRadius, endRadius);
+
+            layoutButtons.setVisibility(View.VISIBLE);
+            anim.start();
+
+            anim.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animator) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animator) {
+                    //layoutButtons.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animator) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animator) {
+
+                }
+            });
+
+        }
 
     @Override
     protected void onStop() {
