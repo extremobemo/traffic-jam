@@ -81,7 +81,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public MarkerOptions markerOptions;
     public Marker myMark;
     public PlayerApi playerApi;
-    public final String user = "extremobemo";
+    public final String user = "christopher";
     public boolean dialog_open = false;
     public String prospect;
     private RelativeLayout layoutButtons;
@@ -123,6 +123,17 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 viewHostMenu();
             }
         });
+        Button host = (Button) findViewById(R.id.quit);
+        host.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                c.deleteInstance(user);
+                viewHostMenu();
+
+            }
+        });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -157,14 +168,20 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                 double lon = (double) child.child("location").child("lon").getValue();
                                 dropPinEffect(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey())));
                             }catch(Exception e){
-                                continue;
+                                continue; //Users location has not updated yet, waiting for database to get my location.
                             }
 
                         }
                         else{
-                            double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
-                            double lon = (double) child.child("location").child("lon").getValue();
-                            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
+                            try{
+                                double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
+                                double lon = (double) child.child("location").child("lon").getValue();
+                                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
+                            }catch(Exception e){
+                                continue;
+                                //c.deleteInstance(user);
+                            }
+
                         }
                 }
             }
@@ -208,6 +225,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
                         playerApi  = mSpotifyAppRemote.getPlayerApi();
+                        drawHostScreen();
                         //hostStation();
                         //LatLng location = getLocation();
                         //c.writeLocation(location.latitude, location.longitude);
@@ -309,8 +327,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
     @Override
     protected void onDestroy(){
-        super.onDestroy();
         c.deleteInstance(user);
+        super.onDestroy();
         //unregisterReceiver(jam_service.broadcastReceiver);
     }
 
@@ -489,6 +507,41 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 }
             }
         });
+    }
+    public void drawHostScreen(){
+        playerApi  = mSpotifyAppRemote.getPlayerApi();
+        playerApi.subscribeToPlayerState()
+                .setEventCallback(new Subscription.EventCallback<PlayerState>() {
+                    @Override
+                    public void onEvent(final PlayerState playerState) {
+                        c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
+                                playerState.track.uri);
+                        ImageUri currentImg = playerState.track.imageUri;
+                        mSpotifyAppRemote.getImagesApi().getImage(currentImg)
+                                .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
+                                    @Override
+                                    public void onResult(Bitmap bitmap) {
+                                        cover = bitmap;
+                                        Drawable j = new BitmapDrawable(getResources(), bitmap);
+                                        ImageView i = findViewById(R.id.art);
+                                        BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
+                                        i.setImageDrawable(j);
+                                    }
+                                })
+                                .setErrorCallback(new ErrorCallback() {
+                                    @Override
+                                    public void onError(Throwable throwable) {
+                                        System.out.println(throwable.toString());
+                                    }
+                                });
+                    }
+                })
+                .setErrorCallback(new ErrorCallback() {
+                    @Override
+                    public void onError(Throwable throwable) {
+                        // =( =( =(
+                    }
+                });
     }
     public void hostStation(){
         c.writeLocation(user, myLat, myLong);
