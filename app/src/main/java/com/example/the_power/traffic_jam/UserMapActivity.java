@@ -2,29 +2,19 @@ package com.example.the_power.traffic_jam;
 import android.Manifest;
 import android.animation.Animator;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
-import android.location.Criteria;
-import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.provider.CalendarContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -34,8 +24,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,12 +32,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.FirebaseError;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -65,23 +51,17 @@ import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 
-import java.io.IOException;
-
 
 public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     public static Bitmap cover;
     public FirebaseConnect c;
-    public static String song;
     public static GoogleMap mMap;
     private static final String REDIRECT_URI = "extremobemotrafficjam://callback";
     private SpotifyAppRemote mSpotifyAppRemote;
     public Dialog dialog;
-    public RelativeLayout popupbg;
-    public LocationManager lm;
     public MarkerOptions markerOptions;
-    public Marker myMark;
     public PlayerApi playerApi;
-    public final String user = "christopher";
+    public static final String user = "extremobemo";
     public boolean dialog_open = false;
     public String prospect;
     private RelativeLayout layoutButtons;
@@ -90,48 +70,63 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public double myLat;
     public double myLong;
     public boolean amHosting = false;
+    public ValueEventListener z;
+    public static HostNotification hostNotification;
+    public CustomAlertDialog CAD;
     FloatingActionButton fab;
     LocationManager locationManager;
-    LocationListener locationListener;
     FusedLocationProviderClient mFusedLocationClient;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        hostNotification = new HostNotification(this);
+        hostNotification.createNotificationChannel();
+        CAD = new CustomAlertDialog();
+        CAD.setContext(this);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_map);
-        layoutButtons = (RelativeLayout) findViewById(R.id.layoutButtons);
-        layoutMain = (RelativeLayout) findViewById(R.id.main);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+        layoutButtons = findViewById(R.id.layoutButtons);
+        layoutMain = findViewById(R.id.main);
+        fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Button host = (Button) findViewById(R.id.host);
-                host.setOnClickListener(new View.OnClickListener()
-                {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        hostStation();
-                        viewHostMenu();
-
-                    }
-                });
                 viewHostMenu();
             }
         });
-        Button host = (Button) findViewById(R.id.quit);
+        Button host = findViewById(R.id.host);
         host.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                c.deleteInstance(user);
+                hostStation();
                 viewHostMenu();
 
+            }
+        });
+        Button delete_station = findViewById(R.id.quit);
+        delete_station.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                hostNotification.stopHosting();
+                c.deleteInstance(user);
+                amHosting = false;
+                viewHostMenu();
+
+            }
+        });
+        Button test = findViewById(R.id.test);
+        test.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                CAD.showAlertDialogButtonClicked();
             }
         });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -140,29 +135,12 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         mapFragment.getMapAsync(this);
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference ref = database.getReference("songname");
-        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    if (location != null) {
-                        CameraPosition.Builder builder = new CameraPosition.Builder();
-                        builder.tilt(30);
-                        builder.zoom(18f);
-                        builder.target(new LatLng(location.getLatitude(), location.getLongitude()));
-                        CameraPosition cameraPosition = builder.build();
-                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                    }
-                }
-            });
-        }
-
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mMap.clear();
                     for (DataSnapshot child : dataSnapshot.getChildren()) {
-                        if(child.getKey() == user){
+                        if(child.getKey().equals(user)){
                             try{
                                 double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
                                 double lon = (double) child.child("location").child("lon").getValue();
@@ -178,12 +156,12 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                 double lon = (double) child.child("location").child("lon").getValue();
                                 mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
                             }catch(Exception e){
-                                continue;
-                                //c.deleteInstance(user);
+                                continue; //Prevents crash when users delete stations
                             }
 
                         }
                 }
+                //TODO: CLEAN UP THIS DRAWING OF THE MARKERS CODE...
             }
 
             @Override
@@ -191,25 +169,15 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 System.out.println("The read failed: " + databaseError.getCode());
             }
         });
-        // Acquire a reference to the system Location Manager
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-        // Define a listener that responds to location updates
-
-        // Register the listener with the Location Manager to receive location updates
     }
 
     @Override
     protected void onStart() {
         dialog = new Dialog(UserMapActivity.this, R.style.DialogSlideAnim);
+        dialog.setCanceledOnTouchOutside(false);
         dialog.getWindow().setGravity(Gravity.CENTER);
-
         TextView song = (TextView) findViewById(R.id.song_name);
-
         c = new FirebaseConnect(user,"0");
-        //subscribe("extremobemo"); subscribes to a user in Firebase
-
-
         super.onStart();
             ConnectionParams connectionParams =
                             new ConnectionParams.Builder("7cc32309fd9e44638285bfb50fdc5482")
@@ -219,24 +187,16 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
         SpotifyAppRemote.connect(this, connectionParams,
                 new Connector.ConnectionListener() {
-
-
                     @Override
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
                         playerApi  = mSpotifyAppRemote.getPlayerApi();
                         drawHostScreen();
-                        //hostStation();
-                        //LatLng location = getLocation();
-                        //c.writeLocation(location.latitude, location.longitude);
-                        //TODO GET LAT/LON HERE AND PUSH TO FIREBASE
-                        // Now you can start interacting with App Remote
                     }
 
                     @Override
                     public void onFailure(Throwable throwable) {
                         System.out.println("Something went wrong trying to connect to Spotify! " + throwable);
-
                         // Something went wrong when attempting to connect! Handle errors here
                     }
                 });
@@ -247,16 +207,11 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             hostviewOpen = true;
             int x = layoutMain.getRight();
             int y = layoutMain.getBottom();
-
             int startRadius = 0;
             int endRadius = (int) Math.hypot(layoutMain.getWidth(), layoutMain.getHeight());
-
-
             Animator anim = ViewAnimationUtils.createCircularReveal(layoutButtons, x, y, startRadius, endRadius);
-
             layoutButtons.setVisibility(View.VISIBLE);
             anim.start();
-
             anim.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animator) {
@@ -360,7 +315,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
+        mMap.setOnMarkerClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(50, -120)));
         LocationManager service = (LocationManager)
                 getSystemService(LOCATION_SERVICE);
@@ -376,10 +331,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                             if (location != null) {
                                 myLat = location.getLatitude();
                                 myLong = location.getLongitude();
-                               // c.writeLocation(user, location.getLatitude(), location.getLongitude());
                             }
                             else{
-                                c.writeLocation(user,5.0,5.0);
+                                CAD.showAlertDialogButtonClicked();
                             }
                         }
                     });
@@ -465,14 +419,19 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         newBitmap.recycle();
         return color;
     }
-    public void subscribe(String user){
+    public void subscribe(final String user){
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference ref = database.getReference("songname");
-        ref.child(user).child("track").child("trackuri").addValueEventListener(new ValueEventListener() {
+        final DatabaseReference ref = database.getReference("songname");
+        ref.child(user).child("track").child("trackuri").addValueEventListener(z = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-               mSpotifyAppRemote.getPlayerApi().play(dataSnapshot.getValue().toString());
-                System.out.println(dataSnapshot.getValue());
+                try{
+                    mSpotifyAppRemote.getPlayerApi().play(dataSnapshot.getValue().toString());
+                    System.out.println(dataSnapshot.getValue());
+                }catch (Exception e){
+                    ref.child(user).child("track").child("trackuri").removeEventListener(z);
+                }
+
             }
 
             @Override
@@ -514,8 +473,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 .setEventCallback(new Subscription.EventCallback<PlayerState>() {
                     @Override
                     public void onEvent(final PlayerState playerState) {
-                        c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
-                                playerState.track.uri);
                         ImageUri currentImg = playerState.track.imageUri;
                         mSpotifyAppRemote.getImagesApi().getImage(currentImg)
                                 .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
@@ -591,39 +548,42 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 .setEventCallback(new Subscription.EventCallback<PlayerState>() {
                     @Override
                     public void onEvent(final PlayerState playerState) {
-                        c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
-                                playerState.track.uri);
-                        ImageUri currentImg = playerState.track.imageUri;
-                        mSpotifyAppRemote.getImagesApi().getImage(currentImg)
-                                .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
-                                    @Override
-                                    public void onResult(Bitmap bitmap) {
-                                        cover = bitmap;
-                                        Drawable j = new BitmapDrawable(getResources(), bitmap);
-                                        ImageView i = dialog.findViewById(R.id.CoverArt);
-                                        BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
-                                        //i.setImageDrawable(j);
-                                        dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
-                                        TextView song_n = (TextView) dialog.findViewById(R.id.song_name);
-                                        TextView song_a = (TextView) dialog.findViewById(R.id.artist);
-                                        song_n.setText(playerState.track.name);
-                                        song_a.setText(playerState.track.artist.name);
-                                    }
-                                })
-                                .setErrorCallback(new ErrorCallback() {
-                                    @Override
-                                    public void onError(Throwable throwable) {
-                                        System.out.println(throwable.toString());
-                                    }
-                                });
-                    }
-                })
-                .setErrorCallback(new ErrorCallback() {
-                    @Override
-                    public void onError(Throwable throwable) {
-                        // =( =( =(
-                    }
-                });
+                        if(amHosting == true){
+                            c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
+                                    playerState.track.uri);
+                            hostNotification.host(playerState.track.name, user);
+                            ImageUri currentImg = playerState.track.imageUri;
+                            mSpotifyAppRemote.getImagesApi().getImage(currentImg)
+                                    .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
+                                        @Override
+                                        public void onResult(Bitmap bitmap) {
+                                            cover = bitmap;
+                                            Drawable j = new BitmapDrawable(getResources(), bitmap);
+                                            ImageView i = dialog.findViewById(R.id.CoverArt);
+                                            BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
+                                            //i.setImageDrawable(j);
+                                            dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
+                                            TextView song_n = (TextView) dialog.findViewById(R.id.song_name);
+                                            TextView song_a = (TextView) dialog.findViewById(R.id.artist);
+                                            song_n.setText(playerState.track.name);
+                                            song_a.setText(playerState.track.artist.name);
+                                        }
+                                    })
+                                    .setErrorCallback(new ErrorCallback() {
+                                        @Override
+                                        public void onError(Throwable throwable) {
+                                            System.out.println(throwable.toString());
+                                        }
+                                    });
+                        }
+    }
+})
+        .setErrorCallback(new ErrorCallback() {
+@Override
+public void onError(Throwable throwable) {
+        // =( =( =(
+        }
+        });
     }
 }
 

@@ -33,6 +33,7 @@ public class FirebaseConnect {
         myRef.child(userID).child("location").child("lon").setValue(lon);
     }
     public void deleteInstance(String userID){
+        System.out.println(userID);
         myRef.child(userID).removeValue();
 
     }
