@@ -32,16 +32,16 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
-
         <activity
-            android:name=".UserMapActivity"
-            android:label="@string/title_activity_user_map">
+            android:name=".SplashScreenActivity"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".UserMapActivity" />
         <receiver android:name="com.example.the_power.traffic_jam.MyBroadcastReceiver">
             <intent-filter>
                 <action android:name="com.pulp.action"/>

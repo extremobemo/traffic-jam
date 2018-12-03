@@ -2,6 +2,8 @@ package com.example.the_power.traffic_jam;
 import android.Manifest;
 import android.animation.Animator;
 import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -16,6 +18,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.BounceInterpolator;
@@ -174,6 +177,19 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     protected void onStart() {
         dialog = new Dialog(UserMapActivity.this, R.style.DialogSlideAnim);
+        dialog.setOnKeyListener(new Dialog.OnKeyListener() {
+
+            @Override
+            public boolean onKey(DialogInterface arg0, int keyCode,
+                                 KeyEvent event) {
+                // TODO Auto-generated method stub
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                    dialog_open = false;
+                    dialog.dismiss();
+                }
+                return true;
+            }
+        });
         dialog.setCanceledOnTouchOutside(false);
         dialog.getWindow().setGravity(Gravity.CENTER);
         TextView song = (TextView) findViewById(R.id.song_name);
@@ -295,6 +311,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             dialog_open = false;
         }
     }
+
     @Override
     protected void onResume(){
         super.onResume();
