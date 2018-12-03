@@ -18,6 +18,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
     public void setUser(String user){
         this.user = user;
     }
+
     public void deleteUser(String user){
         FirebaseConnect c = new FirebaseConnect();
         c.deleteInstance(user);

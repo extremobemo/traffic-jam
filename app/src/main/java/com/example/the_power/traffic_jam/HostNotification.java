@@ -52,5 +52,6 @@ public class HostNotification {
 
     public void stopHosting(){
         notificationManager.cancel(01);
+        UserMapActivity.amHosting = false;
     }
 }

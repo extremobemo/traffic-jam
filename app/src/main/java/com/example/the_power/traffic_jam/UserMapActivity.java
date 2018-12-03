@@ -69,7 +69,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     private boolean hostviewOpen = false;
     public double myLat;
     public double myLong;
-    public boolean amHosting = false;
+    public static boolean amHosting = false;
     public ValueEventListener z;
     public static HostNotification hostNotification;
     public CustomAlertDialog CAD;
