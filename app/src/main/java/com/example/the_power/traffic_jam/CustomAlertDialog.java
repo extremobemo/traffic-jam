@@ -35,6 +35,26 @@ public class CustomAlertDialog extends AppCompatActivity {
             }
         });
     }
+    public void AlreadyHostingError() {
+        // setup the alert builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Already hosting!");
+        builder.setMessage("You cannot subscribe to another station while you are hosting.");
+
+        // add the buttons
+        builder.setPositiveButton("Got it!", null);
+        // create and show the alert dialog
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+        dialog.setCancelable(false);
+        Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        positiveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.cancel();
+            }
+        });
+    }
 
     public void setContext(Context context){
         this.context = context;

@@ -64,7 +64,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public Dialog dialog;
     public MarkerOptions markerOptions;
     public PlayerApi playerApi;
-    public static final String user = "extremobemo";
+    public static final String user = "testuser!";
     public boolean dialog_open = false;
     public String prospect;
     private RelativeLayout layoutButtons;
@@ -121,15 +121,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 amHosting = false;
                 viewHostMenu();
 
-            }
-        });
-        Button test = findViewById(R.id.test);
-        test.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                CAD.showAlertDialogButtonClicked();
             }
         });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -348,6 +339,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                             if (location != null) {
                                 myLat = location.getLatitude();
                                 myLong = location.getLongitude();
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLat, myLong), 9.0f));
                             }
                             else{
                                 CAD.showAlertDialogButtonClicked();
@@ -399,9 +391,15 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                 @Override
                                                 public void onClick(View v)
                                                 {
-                                                    subscribe(prospect);
-                                                    dialog.dismiss();
-                                                    dialog_open = false;
+                                                    if(amHosting == false){
+                                                        subscribe(prospect);
+                                                        dialog.dismiss();
+                                                        dialog_open = false;
+                                                    }
+                                                    else{
+                                                        CAD.AlreadyHostingError();
+                                                    }
+
                                                 }
                                             });
 

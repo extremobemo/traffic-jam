@@ -43,6 +43,24 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center">
+            <TextView
+                android:id="@+id/artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="-1dp"
+                android:text="Tame Impala"
+                android:textSize="30dp"
+                android:textColor="#ffffff"/>
+            <TextView
+                android:id="@+id/song"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="-1dp"
+                android:text="Tame Impala"
+                android:textSize="20dp"
+                android:textColor="#ffffff"/>/>
             <ImageView
 
                 android:id="@+id/art"
@@ -57,21 +75,15 @@
                 android:layout_width="160dp"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/colorPrimaryDark"
-                android:text="button one"/>
+                android:text="Host Station"/>
 
             <Button
                 android:id="@+id/quit"
                 android:layout_width="160dp"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/colorPrimaryDark"
-                android:text="button two"/>
+                android:text="Stop Hosting"/>
 
-            <Button
-                android:layout_width="160dp"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/colorPrimaryDark"
-                android:text="test"
-                android:id="@+id/test"/>
 
         </LinearLayout>
 
