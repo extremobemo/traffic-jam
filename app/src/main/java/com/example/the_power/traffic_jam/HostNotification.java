@@ -50,6 +50,24 @@ public class HostNotification {
 
     }
 
+    public void subscribe(String song, String user){
+        BroadcastReceiver b = new MyBroadcastReceiver();
+        ((MyBroadcastReceiver) b).setUser(user);
+        Intent testIntent = new Intent(context, MyBroadcastReceiver.class);
+        PendingIntent pendIntent = PendingIntent.getBroadcast(context, 0, testIntent, 0);
+        mBuilder = new NotificationCompat.Builder(context, "1001")
+                .setSmallIcon(R.drawable.oval_button)
+                .setContentTitle("subscribed to " + user + " on radio.fi")
+                .setContentText("now playing " + song)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(false)
+                .setOngoing(true)
+                .addAction(R.drawable.oval_button, "UNSUBSCRIBE", pendIntent);
+        notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify(01, mBuilder.build());
+
+    }
+
     public void stopHosting(){
         notificationManager.cancel(01);
         UserMapActivity.amHosting = false;

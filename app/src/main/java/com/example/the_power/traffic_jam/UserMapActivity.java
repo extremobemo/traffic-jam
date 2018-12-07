@@ -1,4 +1,5 @@
 package com.example.the_power.traffic_jam;
+
 import android.Manifest;
 import android.animation.Animator;
 import android.app.Dialog;
@@ -27,6 +28,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -100,22 +102,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             }
         });
         Button host = findViewById(R.id.host);
-        host.setOnClickListener(new View.OnClickListener()
-        {
+        host.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 hostStation();
                 viewHostMenu();
 
             }
         });
         Button delete_station = findViewById(R.id.quit);
-        delete_station.setOnClickListener(new View.OnClickListener()
-        {
+        delete_station.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 hostNotification.stopHosting();
                 c.deleteInstance(user);
                 amHosting = false;
@@ -133,27 +131,26 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mMap.clear();
-                    for (DataSnapshot child : dataSnapshot.getChildren()) {
-                        if(child.getKey().equals(user)){
-                            try{
-                                double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
-                                double lon = (double) child.child("location").child("lon").getValue();
-                                dropPinEffect(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey())));
-                            }catch(Exception e){
-                                continue; //Users location has not updated yet, waiting for database to get my location.
-                            }
-
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    if (child.getKey().equals(user)) {
+                        try {
+                            double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
+                            double lon = (double) child.child("location").child("lon").getValue();
+                            dropPinEffect(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey())));
+                        } catch (Exception e) {
+                            continue; //Users location has not updated yet, waiting for database to get my location.
                         }
-                        else{
-                            try{
-                                double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
-                                double lon = (double) child.child("location").child("lon").getValue();
-                                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
-                            }catch(Exception e){
-                                continue; //Prevents crash when users delete stations
-                            }
 
+                    } else {
+                        try {
+                            double lat = (double) child.child("location").child("lat").getValue(); // Long or Double
+                            double lon = (double) child.child("location").child("lon").getValue();
+                            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lon)).title(child.getKey()));
+                        } catch (Exception e) {
+                            continue; //Prevents crash when users delete stations
                         }
+
+                    }
                 }
                 //TODO: CLEAN UP THIS DRAWING OF THE MARKERS CODE...
             }
@@ -184,20 +181,20 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         dialog.setCanceledOnTouchOutside(false);
         dialog.getWindow().setGravity(Gravity.CENTER);
         TextView song = (TextView) findViewById(R.id.song_name);
-        c = new FirebaseConnect(user,"0");
+        c = new FirebaseConnect(user, "0");
         super.onStart();
-            ConnectionParams connectionParams =
-                            new ConnectionParams.Builder("7cc32309fd9e44638285bfb50fdc5482")
-                                    .setRedirectUri(REDIRECT_URI)
-                                    .showAuthView(true)
-                                    .build();
+        ConnectionParams connectionParams =
+                new ConnectionParams.Builder("7cc32309fd9e44638285bfb50fdc5482")
+                        .setRedirectUri(REDIRECT_URI)
+                        .showAuthView(true)
+                        .build();
 
         SpotifyAppRemote.connect(this, connectionParams,
                 new Connector.ConnectionListener() {
                     @Override
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
-                        playerApi  = mSpotifyAppRemote.getPlayerApi();
+                        playerApi = mSpotifyAppRemote.getPlayerApi();
                         drawHostScreen();
                     }
 
@@ -209,8 +206,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 });
 
     }
+
     private void viewHostMenu() {
-        if(hostviewOpen == false){
+        if (hostviewOpen == false) {
             hostviewOpen = true;
             int x = layoutMain.getRight();
             int y = layoutMain.getBottom();
@@ -241,8 +239,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 }
             });
 
-        }
-           else{
+        } else {
             hostviewOpen = false;
             int x = layoutMain.getRight();
             int y = layoutMain.getBottom();
@@ -288,26 +285,25 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         c.deleteInstance(user);
         super.onDestroy();
         //unregisterReceiver(jam_service.broadcastReceiver);
     }
 
     @Override
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
-        if(dialog_open == true){
+        if (dialog_open == true) {
             dialog.dismiss();
             dialog_open = false;
         }
     }
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
     }
-
 
 
     /**
@@ -324,24 +320,22 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMarkerClickListener(this);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(50, -120)));
         LocationManager service = (LocationManager)
                 getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             return;
-        }else{
+        } else {
             mFusedLocationClient.getLastLocation()
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
                             // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
+                            if (location != null && (location.getLongitude() != 0 && location.getLatitude() != 0)) {
                                 myLat = location.getLatitude();
                                 myLong = location.getLongitude();
                                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(myLat, myLong), 9.0f));
-                            }
-                            else{
+                            } else {
                                 CAD.showAlertDialogButtonClicked();
                             }
                         }
@@ -352,14 +346,14 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     public boolean onMarkerClick(final Marker m) {
         prospect = m.getTitle();
-        if(dialog_open == false){
+        if (dialog_open == false) {
             final FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference ref = database.getReference("songname");
             ref.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    for(DataSnapshot child : dataSnapshot.getChildren() ){
-                        if(child.getKey().equals(m.getTitle())){
+                    for (final DataSnapshot child : dataSnapshot.getChildren()) {
+                        if (child.getKey().equals(m.getTitle())) {
                             ImageUri currentImg = new ImageUri((String) child.child("track").child("imageuri").child("raw").getValue());
                             mSpotifyAppRemote.getImagesApi().getImage(currentImg)
                                     .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
@@ -370,15 +364,13 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                             Drawable j = new BitmapDrawable(getResources(), bitmap);
                                             dialog.setContentView(R.layout.user_popup);
                                             ImageView i = dialog.findViewById(R.id.CoverArt);
-                                            cover = Bitmap.createScaledBitmap(bitmap,  300 ,300, true);
+                                            cover = Bitmap.createScaledBitmap(bitmap, 300, 300, true);
                                             i.setImageDrawable(j);
                                             dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
                                             Button cancel = (Button) dialog.findViewById(R.id.cancel);
-                                            cancel.setOnClickListener(new View.OnClickListener()
-                                            {
+                                            cancel.setOnClickListener(new View.OnClickListener() {
                                                 @Override
-                                                public void onClick(View v)
-                                                {
+                                                public void onClick(View v) {
                                                     dialog.dismiss();
                                                     dialog_open = false;
 
@@ -386,19 +378,17 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                             });
 
                                             Button sub = (Button) dialog.findViewById(R.id.sub);
-                                            sub.setOnClickListener(new View.OnClickListener()
-                                            {
+                                            sub.setOnClickListener(new View.OnClickListener() {
                                                 @Override
-                                                public void onClick(View v)
-                                                {
-                                                    if(amHosting == false){
+                                                public void onClick(View v) {
+
                                                         subscribe(prospect);
+                                                        hostNotification.subscribe(child.child("track").child("songname").getValue().toString(),prospect);
                                                         dialog.dismiss();
                                                         dialog_open = false;
-                                                    }
-                                                    else{
-                                                        CAD.AlreadyHostingError();
-                                                    }
+
+                                                        //else: CAD.AlreadyHostingError();
+
 
                                                 }
                                             });
@@ -415,6 +405,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     }
 
                 }
+
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     System.out.println("The read failed: " + databaseError.getCode());
@@ -434,16 +425,17 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         newBitmap.recycle();
         return color;
     }
-    public void subscribe(final String user){
+
+    public void subscribe(final String user) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference ref = database.getReference("songname");
         ref.child(user).child("track").child("trackuri").addValueEventListener(z = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                try{
+                try {
                     mSpotifyAppRemote.getPlayerApi().play(dataSnapshot.getValue().toString());
                     System.out.println(dataSnapshot.getValue());
-                }catch (Exception e){
+                } catch (Exception e) {
                     ref.child(user).child("track").child("trackuri").removeEventListener(z);
                 }
 
@@ -456,6 +448,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         });
 
     }
+
     private void dropPinEffect(final Marker marker) {
         final Handler handler = new Handler();
         final long start = SystemClock.uptimeMillis();
@@ -482,8 +475,9 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
             }
         });
     }
-    public void drawHostScreen(){
-        playerApi  = mSpotifyAppRemote.getPlayerApi();
+
+    public void drawHostScreen() {
+        playerApi = mSpotifyAppRemote.getPlayerApi();
         playerApi.subscribeToPlayerState()
                 .setEventCallback(new Subscription.EventCallback<PlayerState>() {
                     @Override
@@ -515,10 +509,11 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     }
                 });
     }
-    public void hostStation(){
+
+    public void hostStation() {
         c.writeLocation(user, myLat, myLong);
         amHosting = true;
-        playerApi  = mSpotifyAppRemote.getPlayerApi();
+        playerApi = mSpotifyAppRemote.getPlayerApi();
         playerApi.getPlayerState()
                 .setResultCallback(new CallResult.ResultCallback<PlayerState>() {
                     @Override
@@ -538,7 +533,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                                 .snippet(playerState.track.artist.name);
                                         dialog.setContentView(R.layout.user_popup);
                                         ImageView i = dialog.findViewById(R.id.CoverArt);
-                                        cover = Bitmap.createScaledBitmap(bitmap,  300 ,300, true);
+                                        cover = Bitmap.createScaledBitmap(bitmap, 300, 300, true);
                                         i.setImageDrawable(j);
 
 
@@ -563,7 +558,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                 .setEventCallback(new Subscription.EventCallback<PlayerState>() {
                     @Override
                     public void onEvent(final PlayerState playerState) {
-                        if(amHosting == true){
+                        if (amHosting == true) {
                             c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
                                     playerState.track.uri);
                             hostNotification.host(playerState.track.name, user);
@@ -591,14 +586,14 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         }
                                     });
                         }
-    }
-})
-        .setErrorCallback(new ErrorCallback() {
-@Override
-public void onError(Throwable throwable) {
-        // =( =( =(
-        }
-        });
+                    }
+                })
+                .setErrorCallback(new ErrorCallback() {
+                    @Override
+                    public void onError(Throwable throwable) {
+                        // =( =( =(
+                    }
+                });
     }
 }
 

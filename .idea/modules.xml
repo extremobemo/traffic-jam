@@ -6,7 +6,6 @@
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/jam-remote/jam-remote.iml" filepath="$PROJECT_DIR$/jam-remote/jam-remote.iml" />
       <module fileurl="file://$PROJECT_DIR$/mysql-connector/mysql-connector.iml" filepath="$PROJECT_DIR$/mysql-connector/mysql-connector.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mysql-connector/mysql-connector.iml" filepath="$PROJECT_DIR$/mysql-connector/mysql-connector.iml" />
       <module fileurl="file://$PROJECT_DIR$/spotify-app-remote-release-0.5.0/spotify-app-remote-release-0.5.0.iml" filepath="$PROJECT_DIR$/spotify-app-remote-release-0.5.0/spotify-app-remote-release-0.5.0.iml" />
     </modules>
   </component>
