@@ -44,7 +44,7 @@
             android:layout_height="match_parent"
             android:gravity="center">
             <TextView
-                android:id="@+id/artist"
+                android:id="@+id/song"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
@@ -53,7 +53,7 @@
                 android:textSize="30dp"
                 android:textColor="#ffffff"/>
             <TextView
-                android:id="@+id/song"
+                android:id="@+id/artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"

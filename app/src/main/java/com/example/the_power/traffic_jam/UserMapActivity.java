@@ -274,7 +274,6 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
 
                 }
             });
-
         }
     }
 
@@ -357,13 +356,16 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                             ImageUri currentImg = new ImageUri((String) child.child("track").child("imageuri").child("raw").getValue());
                             mSpotifyAppRemote.getImagesApi().getImage(currentImg)
                                     .setResultCallback(new CallResult.ResultCallback<Bitmap>() {
-                                        @Override
                                         public void onResult(Bitmap bitmap) {
                                             //c.writeLocation(latitude,longitude);
                                             cover = bitmap;
                                             Drawable j = new BitmapDrawable(getResources(), bitmap);
                                             dialog.setContentView(R.layout.user_popup);
                                             ImageView i = dialog.findViewById(R.id.CoverArt);
+                                            TextView songname = dialog.findViewById(R.id.song_name);
+                                            TextView artistname = dialog.findViewById(R.id.artist);
+                                            songname.setText(child.child("track").child("songname").getValue().toString());
+                                            artistname.setText(child.child("track").child("artist").getValue().toString());
                                             cover = Bitmap.createScaledBitmap(bitmap, 300, 300, true);
                                             i.setImageDrawable(j);
                                             dialog.getWindow().setBackgroundDrawable((new ColorDrawable(getDominantColor(bitmap))));
@@ -381,15 +383,17 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                             sub.setOnClickListener(new View.OnClickListener() {
                                                 @Override
                                                 public void onClick(View v) {
-
+                                                    if(amHosting == false){
                                                         subscribe(prospect);
                                                         hostNotification.subscribe(child.child("track").child("songname").getValue().toString(),prospect);
                                                         dialog.dismiss();
                                                         dialog_open = false;
 
-                                                        //else: CAD.AlreadyHostingError();
+                                                    }
 
-
+                                                        else{
+                                                        CAD.AlreadyHostingError();
+                                                    }
                                                 }
                                             });
 
@@ -403,9 +407,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     });
                         }
                     }
-
                 }
-
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     System.out.println("The read failed: " + databaseError.getCode());
@@ -492,6 +494,10 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                         ImageView i = findViewById(R.id.art);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
                                         i.setImageDrawable(j);
+                                        TextView artist = findViewById(R.id.artist);
+                                        TextView song = findViewById(R.id.song);
+                                        artist.setText(playerState.track.artist.name);
+                                        song.setText(playerState.track.name);
                                     }
                                 })
                                 .setErrorCallback(new ErrorCallback() {
@@ -524,7 +530,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                                     @Override
                                     public void onResult(Bitmap bitmap) {
                                         c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
-                                                playerState.track.uri);
+                                                playerState.track.uri, playerState.track.artist.name);
                                         cover = bitmap;
                                         Drawable j = new BitmapDrawable(getResources(), bitmap);
                                         BitmapDescriptor d = BitmapDescriptorFactory.fromBitmap(cover);
@@ -560,7 +566,7 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                     public void onEvent(final PlayerState playerState) {
                         if (amHosting == true) {
                             c.writeNewUser(user, playerState.track.name, playerState.track.imageUri,
-                                    playerState.track.uri);
+                                    playerState.track.uri, playerState.track.artist.name);
                             hostNotification.host(playerState.track.name, user);
                             ImageUri currentImg = playerState.track.imageUri;
                             mSpotifyAppRemote.getImagesApi().getImage(currentImg)

@@ -21,11 +21,13 @@ public class FirebaseConnect {
     }
     private static FirebaseDatabase database = FirebaseDatabase.getInstance();
     public static DatabaseReference myRef = database.getReference("songname");
-    public void writeNewUser(String userID, String song_id, ImageUri image, String uri) {
+    public void writeNewUser(String userID, String song_id, ImageUri image, String uri, String artist) {
         myRef.child(userID).child("track").child("songname").setValue(song_id);
         myRef.child(userID).child("track").child("imageuri").setValue(image);
         myRef.child(userID).child("track").child("trackuri").setValue(uri);
+        myRef.child(userID).child("track").child("artist").setValue(artist);
         myRef.child(userID).child("track").child("username").setValue(username);
+
     }
 
     public void writeLocation(String userID ,Double lat, Double lon){
