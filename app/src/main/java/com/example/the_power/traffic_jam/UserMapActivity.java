@@ -18,8 +18,13 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.BounceInterpolator;
@@ -28,6 +33,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.support.v7.widget.Toolbar;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -38,6 +44,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -57,7 +64,7 @@ import com.spotify.protocol.types.ImageUri;
 import com.spotify.protocol.types.PlayerState;
 
 
-public class UserMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+public class UserMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     public static Bitmap cover;
     public FirebaseConnect c;
     public static GoogleMap mMap;
@@ -78,6 +85,8 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     public ValueEventListener z;
     public static HostNotification hostNotification;
     public CustomAlertDialog CAD;
+    private DrawerLayout mDrawerLayout;
+    public boolean drawerOpen = false;
     FloatingActionButton fab;
     LocationManager locationManager;
     FusedLocationProviderClient mFusedLocationClient;
@@ -92,6 +101,12 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_map);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionbar = getSupportActionBar();
+        actionbar.setDisplayHomeAsUpEnabled(true);
+        actionbar.setHomeAsUpIndicator(R.drawable.ic_menu_camera);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
         layoutButtons = findViewById(R.id.layoutButtons);
         layoutMain = findViewById(R.id.main);
         fab = findViewById(R.id.fab);
@@ -162,6 +177,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
         });
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                if(hostviewOpen == false){
+                    mDrawerLayout.openDrawer(GravityCompat.START);
+                    drawerOpen = true;
+                    return true;
+                }
+        }
+        return super.onOptionsItemSelected(item);
+    }
     @Override
     protected void onStart() {
         dialog = new Dialog(UserMapActivity.this, R.style.DialogSlideAnim);
@@ -318,6 +345,10 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        //mMap.setMapStyle(
+                //MapStyleOptions.loadRawResourceStyle(
+                       // this, R.raw.style_json));
+
         mMap.setOnMarkerClickListener(this);
         LocationManager service = (LocationManager)
                 getSystemService(LOCATION_SERVICE);
@@ -600,6 +631,18 @@ public class UserMapActivity extends FragmentActivity implements OnMapReadyCallb
                         // =( =( =(
                     }
                 });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(hostviewOpen == true){
+            viewHostMenu();
+            hostviewOpen = false;
+        }
+        if(drawerOpen == true){
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+            drawerOpen = false;
+        }
     }
 }
 
